@@ -385,12 +385,11 @@ impl Connections {
         println!("deNetwork ready!");
         end_timer!(timer);
     }
+
     fn am_master(&self) -> bool {
         self.id == 0
     }
-    fn broadcast(&self, _bytes_out: &[u8]) -> Vec<Vec<u8>> {
-        unimplemented!("No longer supported");
-    }
+
     fn send_to_master(&self, bytes_out: Vec<u8>) -> Option<Vec<Vec<u8>>> {
         let timer = start_timer!(|| format!("To master {}", bytes_out.len()));
         let channel_id = CHANNEL_ID.get();
@@ -555,11 +554,6 @@ impl DeNet for DeMultiNet {
     #[inline]
     fn stats() -> crate::Stats {
         STATS.lock().unwrap().clone()
-    }
-
-    #[inline]
-    fn broadcast_bytes(bytes: &[u8]) -> Vec<Vec<u8>> {
-        get_ch!().broadcast(bytes)
     }
 
     #[inline]
