@@ -14,7 +14,7 @@ use std::{
     io::{BufRead, BufReader, ErrorKind, Read, Write},
     net::SocketAddr,
     sync::{Mutex, RwLock},
-    thread::{self, JoinHandle},
+    thread::{self, JoinHandle}, time::Duration,
 };
 
 use ark_std::{end_timer, start_timer};
@@ -120,7 +120,30 @@ fn write_data(stream: &mut impl Write, channel_id: usize, data: &[u8]) {
     let channel_id = [channel_id as u8];
     let bytes_size = (data.len() as u64).to_le_bytes();
     let actual_data = [&channel_id[..], &bytes_size[..], data].concat();
-    stream.write_all(&actual_data).unwrap();
+
+    let mut written = 0;
+    while written < actual_data.len() {
+        match stream.write(&actual_data[written..]) {
+            Ok(0) => {
+                panic!("");
+                // Connection probably closed
+                // return Err(io::Error::new(
+                //     ErrorKind::WriteZero,
+                //     "failed to write to socket",
+                // ));
+            }
+            Ok(n) => {
+                written += n;
+            }
+            Err(ref e) if e.kind() == ErrorKind::WouldBlock => {
+                // Non-blocking socket: send buffer full, wait a bit and retry
+                thread::sleep(Duration::from_millis(1));
+                continue;
+            }
+            Err(e) => panic!(""),
+        }
+    }
+    // stream.write_all(&actual_data).unwrap();
 }
 
 // These worker threads are globals
